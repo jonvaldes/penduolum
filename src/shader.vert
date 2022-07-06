@@ -5,20 +5,25 @@ layout(location = 0) out vec3 v_color;
 
 
 layout(std140) uniform CB{
+	float ar;
 	uint point_count;
 	float line_thickness;
 
 	float radius0;
  	float initial_phase0;
- 	float period0;
+ 	float cycle_count0;
+ 	float fractional_cycles0;
  	float initial_amplitude0;
  	float amplitude_decay0;
+ 	float rotation0;
 
 	float radius1;
  	float initial_phase1;
- 	float period1;
+ 	float cycle_count1;
+ 	float fractional_cycles1;
  	float initial_amplitude1;
  	float amplitude_decay1;
+ 	float rotation1;
 };
 
 
@@ -26,18 +31,20 @@ layout(std140) uniform CB{
 
 vec2 pendulum(float radius,
  			  float initial_phase,
- 			  float period,
+ 			  float cycle_count,
+ 			  float fractional_cycles,
  			  float initial_amplitude,
  			  float amplitude_decay,
+ 			  float rotation,
  			  float t) {
  	float tp = t;
 
 	// The pendulum moves as a sine wave within
-	float base_movement = sin(initial_phase + tp * period);
+	float base_movement = sin(initial_phase + tp * 2.0 * PI * (cycle_count + fractional_cycles));
 
 	float amplitude = initial_amplitude * pow(amplitude_decay, t);
 	
-	float current_angle = PI * 1.5 + amplitude * base_movement;
+	float current_angle = rotation + amplitude * base_movement;
 
 	return radius * vec2(
 		cos(current_angle),
@@ -49,17 +56,21 @@ vec2 pointPos(uint index) {
 	vec2 p0 = pendulum(
 			radius0,
 		 	initial_phase0,
-			period0,
+			cycle_count0,
+			fractional_cycles0,
 		 	initial_amplitude0,
 			amplitude_decay0,
+			rotation0,
 			t);
 
 	vec2 p1 = pendulum(
 			radius1,
 		 	initial_phase1,
-			period1,
+			cycle_count1,
+			fractional_cycles1,
 		 	initial_amplitude1,
 			amplitude_decay1,
+			rotation1,
 			t);
 
 	return p0 + p1;
@@ -87,7 +98,7 @@ void main() {
     vec2 tangent = normalize(nextPos - localPos);
     vec2 perpDir = vec2(-tangent.y, tangent.x);
 
-    vec2 vertPos = localPos + perpDir * lateralOffset;
+    vec2 vertPos = (localPos + perpDir * lateralOffset) * vec2(1.0, ar);
 
 	float color_t = gl_VertexID / float(point_count);
 
