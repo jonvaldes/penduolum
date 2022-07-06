@@ -19,6 +19,7 @@ struct State {
 #[derive(Default, Copy, Clone, NoUninit)]
 struct CB {
     point_count: u32,
+    line_thickness: f32,
 
 	radius0: f32,
  	initial_phase0: f32,
@@ -84,16 +85,17 @@ fn setup(gfx: &mut Graphics) -> State {
 
     let cb_data = CB{
         point_count: 30000,
+        line_thickness: 0.001,
 
 	    radius0: 0.4,
  	    initial_phase0: 1.5,
- 	    period0: 30.0,
+ 	    period0: 155.0,
  	    initial_amplitude0: 2.5,
  	    amplitude_decay0: 0.99,
 
 	    radius1: 0.5,
  	    initial_phase1: 0.5,
- 	    period1: 16.0,
+ 	    period1: 85.0,
  	    initial_amplitude1: 1.3,
  	    amplitude_decay1: 0.99,
     };
@@ -155,10 +157,16 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
             ui.heading("Penduolum");
             
             ui.label("Point count");
-            ui.add(egui::Slider::new(&mut state.cb_data.point_count, 1000..=100000));
+            ui.add(egui::Slider::new(&mut state.cb_data.point_count, 1000..=1_000_000));
+            
+            ui.label("Line thickness");
+            ui.add(egui::Slider::new(&mut state.cb_data.line_thickness, 0.0005..=0.01).suffix("°"));
+
+
 
             ui.label("Radius0");
             ui.add(egui::Slider::new(&mut state.cb_data.radius0, 0.0..=0.7).suffix("°"));
+
             ui.label("InitialPhase0");
             ui.add(egui::Slider::new(&mut state.cb_data.initial_phase0, 0.0..=TAU).suffix("°"));
             

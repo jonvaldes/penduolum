@@ -6,6 +6,7 @@ layout(location = 0) out vec3 v_color;
 
 layout(std140) uniform CB{
 	uint point_count;
+	float line_thickness;
 
 	float radius0;
  	float initial_phase0;
@@ -76,7 +77,7 @@ void main() {
          *      2/ 4-5
          */
     uint localCenterIndex = rectIndex + (localIndex & 1);
-    float lateralOffset = 0.001; 
+    float lateralOffset = line_thickness;
     if (localIndex == 1){
         lateralOffset *= -1;
     }
