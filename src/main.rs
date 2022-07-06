@@ -3,6 +3,7 @@ use anyhow::Result;
 use bytemuck::NoUninit;
 use notan::egui::{self, *};
 use notan::prelude::*;
+use std::f32::consts::TAU;
 
 #[derive(AppState)]
 struct State {
@@ -95,24 +96,24 @@ fn setup(gfx: &mut Graphics) -> State {
     let cb_data = CB {
         ar: 1.0,
         zoom: 1.0,
-        point_count: 30000,
+        point_count: 200_000,
         line_thickness: 0.001,
 
         radius0: 0.4,
         initial_phase0: 1.5,
-        cycle_count0: 23.0,
+        cycle_count0: 22.0,
         fractional_cycles0: 0.01,
         initial_amplitude0: 2.5,
         amplitude_decay0: 0.99,
         rotation0: 0.0,
 
-        radius1: 0.5,
+        radius1: 0.3,
         initial_phase1: 0.5,
-        cycle_count1: 15.0,
+        cycle_count1: 20.0,
         fractional_cycles1: 0.01,
         initial_amplitude1: 1.3,
         amplitude_decay1: 0.99,
-        rotation1: 1.59,
+        rotation1: TAU * 0.25,
     };
 
     State {
@@ -164,7 +165,6 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
 
     let output = plugins.egui(|ctx| {
         egui::SidePanel::left("side_panel").show(&ctx, |ui| {
-            use std::f32::consts::TAU;
 
             ui.heading("Penduolum");
 
@@ -181,52 +181,52 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
             ));
 
             ui.label("Zoom");
-            ui.add(egui::Slider::new(&mut state.cb_data.zoom, 0.05..=10.0).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.zoom, 0.05..=10.0));
 
             ui.add_space(20.0);
 
             ui.label("Radius0");
-            ui.add(egui::Slider::new(&mut state.cb_data.radius0, 0.0..=0.7).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.radius0, 0.0..=0.7));
 
             ui.label("InitialPhase0");
-            ui.add(egui::Slider::new(&mut state.cb_data.initial_phase0, 0.0..=TAU).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.initial_phase0, 0.0..=TAU));
 
             ui.label("CycleCount0");
-            ui.add(egui::Slider::new(&mut state.cb_data.cycle_count0, 0.0..=100.0).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.cycle_count0, 0.0..=100.0));
 
             ui.label("FractionalCycles0");
-            ui.add(egui::Slider::new(&mut state.cb_data.fractional_cycles0, 0.0..=1.0).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.fractional_cycles0, 0.0..=1.0));
 
             ui.label("InitialAmplitude0");
-            ui.add(egui::Slider::new(&mut state.cb_data.initial_amplitude0, 0.0..=TAU).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.initial_amplitude0, 0.0..=TAU));
 
             ui.label("AplitudeDecay0");
-            ui.add(egui::Slider::new(&mut state.cb_data.amplitude_decay0, 0.9..=1.0).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.amplitude_decay0, 0.5..=1.0));
 
             ui.label("Rotation0");
-            ui.add(egui::Slider::new(&mut state.cb_data.rotation0, 0.0..=TAU).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.rotation0, 0.0..=TAU));
 
             ui.add_space(20.0);
 
             ui.label("Radius1");
-            ui.add(egui::Slider::new(&mut state.cb_data.radius1, 0.0..=0.7).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.radius1, 0.0..=0.7));
             ui.label("InitialPhase1");
-            ui.add(egui::Slider::new(&mut state.cb_data.initial_phase1, 0.0..=TAU).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.initial_phase1, 0.0..=TAU));
 
             ui.label("CycleCount1");
-            ui.add(egui::Slider::new(&mut state.cb_data.cycle_count1, 0.0..=100.0).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.cycle_count1, 0.0..=100.0));
 
             ui.label("FractionalCycles1");
-            ui.add(egui::Slider::new(&mut state.cb_data.fractional_cycles1, 0.0..=1.0).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.fractional_cycles1, 0.0..=1.0));
 
             ui.label("InitialAmplitude1");
-            ui.add(egui::Slider::new(&mut state.cb_data.initial_amplitude1, 0.0..=TAU).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.initial_amplitude1, 0.0..=TAU));
 
             ui.label("AplitudeDecay1");
-            ui.add(egui::Slider::new(&mut state.cb_data.amplitude_decay1, 0.9..=1.0).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.amplitude_decay1, 0.5..=1.0));
 
             ui.label("Rotation1");
-            ui.add(egui::Slider::new(&mut state.cb_data.rotation1, 0.0..=TAU).suffix("°"));
+            ui.add(egui::Slider::new(&mut state.cb_data.rotation1, 0.0..=TAU));
 
             ui.separator();
         });

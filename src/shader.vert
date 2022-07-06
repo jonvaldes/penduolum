@@ -99,7 +99,7 @@ void main() {
     vec2 tangent = normalize(nextPos - localPos);
     vec2 perpDir = vec2(-tangent.y, tangent.x);
 
-    vec2 vertPos = zoom * (localPos + perpDir * lateralOffset) * vec2(1.0, ar);
+    vec2 vertPos = zoom * (localPos + perpDir * lateralOffset) * vec2(1.0/ar, 1.0);
 
 	float color_t = gl_VertexID / float(point_count);
 
