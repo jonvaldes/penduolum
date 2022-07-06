@@ -6,6 +6,7 @@ layout(location = 0) out vec3 v_color;
 
 layout(std140) uniform CB{
 	float ar;
+	float zoom;
 	uint point_count;
 	float line_thickness;
 
@@ -98,7 +99,7 @@ void main() {
     vec2 tangent = normalize(nextPos - localPos);
     vec2 perpDir = vec2(-tangent.y, tangent.x);
 
-    vec2 vertPos = (localPos + perpDir * lateralOffset) * vec2(1.0, ar);
+    vec2 vertPos = zoom * (localPos + perpDir * lateralOffset) * vec2(1.0, ar);
 
 	float color_t = gl_VertexID / float(point_count);
 
