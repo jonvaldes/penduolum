@@ -8,5 +8,4 @@ edition = "2021"
 anyhow = "1.0.58"
 notan = {version="0.5.0", features=["egui"]}
 notify = "4.0.17"
-bytemuck = {version="1.10.0", features=["derive"]}
 

@@ -1,9 +1,46 @@
 use anyhow::anyhow;
 use anyhow::Result;
-use bytemuck::NoUninit;
 use notan::egui::{self, *};
 use notan::prelude::*;
 use std::f32::consts::TAU;
+
+struct RangedValue {
+    name: String,
+    value: f32,
+    min: f32,
+    max: f32,
+    visible: bool,
+    animated: bool,
+    needs_separator: bool,
+}
+
+impl RangedValue {
+    pub fn new(name: &str, min: f32, max: f32) -> Self {
+        Self{
+            name: String::from(name),
+            value: (max + min) * 0.5,
+            min,
+            max,
+            animated: false,
+            visible: true,
+            needs_separator: false,
+        }
+    }
+    pub fn with_default(mut self, default: f32) -> Self {
+        self.value = default;
+        self
+    }
+    pub fn invisible(mut self) -> Self {
+        self.visible = false;
+        self
+    }
+    pub fn separator(mut self) -> Self {
+        self.needs_separator = true;
+        self
+    }
+
+}
+
 
 #[derive(AppState)]
 struct State {
@@ -12,39 +49,9 @@ struct State {
     must_reload_shaders: bool,
     frame_idx: usize,
     constant_buffer: Buffer,
-    cb_data: CB,
+    settings: Vec<RangedValue>,
 }
 
-#[repr(C)]
-#[derive(Default, Copy, Clone, NoUninit)]
-struct CB {
-    ar: f32,
-    zoom: f32,
-    point_count: u32,
-    line_thickness: f32,
-
-    radius0: f32,
-    initial_phase0: f32,
-    cycle_count0: f32,
-    fractional_cycles0: f32,
-    initial_amplitude0: f32,
-    amplitude_decay0: f32,
-    rotation0: f32,
-
-    radius1: f32,
-    initial_phase1: f32,
-    cycle_count1: f32,
-    fractional_cycles1: f32,
-    initial_amplitude1: f32,
-    amplitude_decay1: f32,
-    rotation1: f32,
-}
-
-impl CB {
-    fn as_float_slice(&self) -> &[f32] {
-        bytemuck::cast_slice(bytemuck::bytes_of(self))
-    }
-}
 
 #[notan_main]
 fn main() -> Result<(), String> {
@@ -53,6 +60,7 @@ fn main() -> Result<(), String> {
         .add_config(
             WindowConfig::new()
                 .vsync()
+                .title("Penduolum")
                 .lazy_loop()
                 .resizable()
                 .multisampling(8),
@@ -85,20 +93,13 @@ fn setup(gfx: &mut Graphics) -> State {
         }
     };
 
-    let cb: CB = Default::default();
-
     let constant_buffer = gfx
         .create_uniform_buffer(0, "CB")
-        .with_data(cb.as_float_slice())
+        .with_data(&[])
         .build()
         .unwrap();
 
-    let cb_data = CB {
-        ar: 1.0,
-        zoom: 1.0,
-        point_count: 200_000,
-        line_thickness: 0.001,
-
+    /*
         radius0: 0.4,
         initial_phase0: 1.5,
         cycle_count0: 22.0,
@@ -115,6 +116,32 @@ fn setup(gfx: &mut Graphics) -> State {
         amplitude_decay1: 0.99,
         rotation1: TAU * 0.25,
     };
+*/
+
+
+
+    let settings = vec![
+        RangedValue::new("ar", 0.0, 0.0).invisible(),
+        RangedValue::new("Point Count", 3000.0, 1_000_000.0).with_default(200_000.0),
+        RangedValue::new("Zoom", 0.1, 3.0).with_default(1.0),
+        RangedValue::new("Line Thickness", 0.0005, 0.01).with_default(0.0007).separator(),
+
+        RangedValue::new("Radius 0", 0.0, 1.0),
+        RangedValue::new("Initial Phase 0", 0.0, TAU),
+        RangedValue::new("Cycle Count 0", 0.0, 100.0),
+        RangedValue::new("Fractional Cycles 0", 0.0, 1.0),
+        RangedValue::new("Initial Amplitude 0", 0.0, TAU),
+        RangedValue::new("Amplitude Decay 0", 0.5, 1.0).with_default(0.97),
+        RangedValue::new("Rotation 0", 0.0, TAU).separator(),
+
+        RangedValue::new("Radius 1", 0.0, 1.0).with_default(0.3),
+        RangedValue::new("Initial Phase 1", 0.0, TAU),
+        RangedValue::new("Cycle Count 1", 0.0, 100.0).with_default(20.0),
+        RangedValue::new("Fractional Cycles 1", 0.0, 1.0),
+        RangedValue::new("Initial Amplitude 1", 0.0, TAU),
+        RangedValue::new("Amplitude Decay 1", 0.5, 1.0).with_default(0.97),
+        RangedValue::new("Rotation 0", 0.0, TAU),
+    ];
 
     State {
         clear_options,
@@ -122,7 +149,7 @@ fn setup(gfx: &mut Graphics) -> State {
         must_reload_shaders: false,
         frame_idx: 0,
         constant_buffer,
-        cb_data,
+        settings,
     }
 }
 
@@ -153,14 +180,17 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
 
     let mut renderer = gfx.create_renderer();
 
-    state.cb_data.ar = gfx.size().0 as f32 / gfx.size().1 as f32;
+    // Set Aspect ratio
+    state.settings[0].value = gfx.size().0 as f32 / gfx.size().1 as f32; 
 
-    gfx.set_buffer_data(&state.constant_buffer, state.cb_data.as_float_slice());
+    let settings_floats: Vec<f32> = state.settings.iter().map(|s| s.value).collect();
+
+    gfx.set_buffer_data(&state.constant_buffer, &settings_floats);
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
     renderer.set_primitive(DrawPrimitive::TriangleStrip);
-    renderer.draw(0, state.cb_data.point_count as i32);
+    renderer.draw(0, state.settings[1].value as i32);
     renderer.end();
 
     let output = plugins.egui(|ctx| {
@@ -168,67 +198,20 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
 
             ui.heading("Penduolum");
 
-            ui.label("Point count");
-            ui.add(egui::Slider::new(
-                &mut state.cb_data.point_count,
-                1000..=1_000_000,
-            ));
+            for s in &mut state.settings {
+                if !s.visible {
+                    continue;
+                }
+                ui.label(&s.name);
 
-            ui.label("Line thickness");
-            ui.add(egui::Slider::new(
-                &mut state.cb_data.line_thickness,
-                0.0005..=0.01,
-            ));
-
-            ui.label("Zoom");
-            ui.add(egui::Slider::new(&mut state.cb_data.zoom, 0.05..=10.0));
-
-            ui.add_space(20.0);
-
-            ui.label("Radius0");
-            ui.add(egui::Slider::new(&mut state.cb_data.radius0, 0.0..=0.7));
-
-            ui.label("InitialPhase0");
-            ui.add(egui::Slider::new(&mut state.cb_data.initial_phase0, 0.0..=TAU));
-
-            ui.label("CycleCount0");
-            ui.add(egui::Slider::new(&mut state.cb_data.cycle_count0, 0.0..=100.0));
-
-            ui.label("FractionalCycles0");
-            ui.add(egui::Slider::new(&mut state.cb_data.fractional_cycles0, 0.0..=1.0));
-
-            ui.label("InitialAmplitude0");
-            ui.add(egui::Slider::new(&mut state.cb_data.initial_amplitude0, 0.0..=TAU));
-
-            ui.label("AplitudeDecay0");
-            ui.add(egui::Slider::new(&mut state.cb_data.amplitude_decay0, 0.5..=1.0));
-
-            ui.label("Rotation0");
-            ui.add(egui::Slider::new(&mut state.cb_data.rotation0, 0.0..=TAU));
-
-            ui.add_space(20.0);
-
-            ui.label("Radius1");
-            ui.add(egui::Slider::new(&mut state.cb_data.radius1, 0.0..=0.7));
-            ui.label("InitialPhase1");
-            ui.add(egui::Slider::new(&mut state.cb_data.initial_phase1, 0.0..=TAU));
-
-            ui.label("CycleCount1");
-            ui.add(egui::Slider::new(&mut state.cb_data.cycle_count1, 0.0..=100.0));
-
-            ui.label("FractionalCycles1");
-            ui.add(egui::Slider::new(&mut state.cb_data.fractional_cycles1, 0.0..=1.0));
-
-            ui.label("InitialAmplitude1");
-            ui.add(egui::Slider::new(&mut state.cb_data.initial_amplitude1, 0.0..=TAU));
-
-            ui.label("AplitudeDecay1");
-            ui.add(egui::Slider::new(&mut state.cb_data.amplitude_decay1, 0.5..=1.0));
-
-            ui.label("Rotation1");
-            ui.add(egui::Slider::new(&mut state.cb_data.rotation1, 0.0..=TAU));
-
-            ui.separator();
+                ui.add(egui::Slider::new(
+                    &mut s.value,
+                    s.min..=s.max,
+                ));
+                if s.needs_separator {
+                    ui.separator();
+                }
+            }
         });
     });
     gfx.render(&renderer);

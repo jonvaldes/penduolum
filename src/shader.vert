@@ -1,13 +1,13 @@
-#version 450
+#version 330
 precision highp float;
 precision highp int;
-layout(location = 0) out vec3 v_color;
+varying vec3 v_color;
 
 
 layout(std140) uniform CB{
 	float ar;
+	float point_count;
 	float zoom;
-	uint point_count;
 	float line_thickness;
 
 	float radius0;
@@ -52,7 +52,7 @@ vec2 pendulum(float radius,
 		sin(current_angle));
 }
 
-vec2 pointPos(uint index) {
+vec2 pointPos(int index) {
 	float t = index * 0.0001;
 	vec2 p0 = pendulum(
 			radius0,
@@ -80,15 +80,15 @@ vec2 pointPos(uint index) {
 
 void main() {
 
-    uint rectIndex = gl_VertexID / 2;
-    uint localIndex = gl_VertexID % 2;
+    int rectIndex = gl_VertexID / 2;
+    int localIndex = gl_VertexID % 2;
 
     /*
          *      0--1 3
          *      | / /|
          *      2/ 4-5
          */
-    uint localCenterIndex = rectIndex + (localIndex & 1);
+    int localCenterIndex = rectIndex + (localIndex & 1);
     float lateralOffset = line_thickness;
     if (localIndex == 1){
         lateralOffset *= -1;
