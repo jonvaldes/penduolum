@@ -1,7 +1,7 @@
-#version 330
+#version 300 es
 precision highp float;
 precision highp int;
-varying vec3 v_color;
+out vec3 v_color;
 
 
 layout(std140) uniform CB{
@@ -53,7 +53,7 @@ vec2 pendulum(float radius,
 }
 
 vec2 pointPos(int index) {
-	float t = index * 0.0001;
+	float t = float(index) * 0.0001;
 	vec2 p0 = pendulum(
 			radius0,
 		 	initial_phase0,
@@ -91,7 +91,7 @@ void main() {
     int localCenterIndex = rectIndex + (localIndex & 1);
     float lateralOffset = line_thickness;
     if (localIndex == 1){
-        lateralOffset *= -1;
+        lateralOffset *= -1.0;
     }
 
     vec2 localPos = pointPos(localCenterIndex);
@@ -101,7 +101,7 @@ void main() {
 
     vec2 vertPos = zoom * (localPos + perpDir * lateralOffset) * vec2(1.0/ar, 1.0);
 
-	float color_t = gl_VertexID / float(point_count);
+	float color_t = float(gl_VertexID) / float(point_count);
 
     v_color = vec3(
     		0.5 + 0.5 * sin(color_t * 2.0*PI),
